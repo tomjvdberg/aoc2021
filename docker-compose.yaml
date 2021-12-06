@@ -1,0 +1,8 @@
+version: '3.7'
+
+services:
+  app:
+    image: golang:1.17
+    volumes:
+      - ./app:/go/app
+    working_dir: /go/app/2021
