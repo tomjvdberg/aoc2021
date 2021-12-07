@@ -1,5 +1,8 @@
 ### Advent of Code 2021
-Solutions made in Golang 1.17
+Welcome to my journey in getting better at Golang. These solutions made in Golang 1.17.
+
+Small disclaimer: the code you find is not refactored in general. It is the code as it was
+when generating the correct answer. 
 
 ### Usage
 Enter the container bash ```make console```
