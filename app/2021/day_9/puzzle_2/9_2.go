@@ -88,7 +88,7 @@ func main() {
 		// Always add the lowpoint to visitedPoints
 		visitedPoints[pointId] = lowPoint
 		// scan horizontally until nine or border detected
-		visiblePoints := getVisiblePointsFrom(lowPoint, grid)
+		visiblePoints := getNeighboursOf(lowPoint, grid)
 		// add points to unvisitedPoints unless they are visited
 		pointsDiff(&visiblePoints, &visitedPoints, &unvisitedPoints)
 		visiteRecursive(&visiblePoints, &visitedPoints, &unvisitedPoints, grid)
@@ -118,7 +118,7 @@ func visiteRecursive(
 	workingUnvisitedPoints := map[string]Point{}
 	for id, unvisitedPoint := range *unvisitedPoints {
 		(*visitedPoints)[id] = unvisitedPoint // I now visit this point
-		visiblePointsT := getVisiblePointsFrom(unvisitedPoint, grid)
+		visiblePointsT := getNeighboursOf(unvisitedPoint, grid)
 		// add points to unvisitedPoints unless they are visited
 		pointsDiff(&visiblePointsT, visitedPoints, &workingUnvisitedPoints)
 	}
@@ -136,6 +136,36 @@ func pointsDiff(
 			(*unvisitedPoints)[id] = visiblePoint
 		}
 	}
+}
+
+func getNeighboursOf(point Point, grid Grid) map[string]Point {
+	visiblePoints := map[string]Point{}
+	// watch left
+	columnToVisit := point.column - 1
+	nextPointHeight, exists := grid.rows[point.row][columnToVisit]
+	if exists && nextPointHeight != 9 {
+		visiblePoints[pointIndex(point.row, columnToVisit)] = Point{point.row, columnToVisit, nextPointHeight}
+	}
+	// watch right
+	columnToVisit = point.column + 1
+	nextPointHeight, exists = grid.rows[point.row][columnToVisit]
+	if exists && nextPointHeight != 9 {
+		visiblePoints[pointIndex(point.row, columnToVisit)] = Point{point.row, columnToVisit, nextPointHeight}
+	}
+	// Move up
+	rowToVisit := point.row - 1
+	nextPointHeight, exists = grid.rows[rowToVisit][point.column]
+	if exists && nextPointHeight != 9 {
+		visiblePoints[pointIndex(rowToVisit, point.column)] = Point{rowToVisit, point.column, nextPointHeight}
+	}
+	// Move down
+	rowToVisit = point.row + 1
+	nextPointHeight, exists = grid.rows[rowToVisit][point.column]
+	if exists && nextPointHeight != 9 {
+		visiblePoints[pointIndex(rowToVisit, point.column)] = Point{rowToVisit, point.column, nextPointHeight}
+	}
+
+	return visiblePoints
 }
 
 func getVisiblePointsFrom(point Point, grid Grid) map[string]Point {
