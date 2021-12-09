@@ -4,5 +4,5 @@ services:
   app:
     image: golang:1.17
     volumes:
-      - ./app:/go/app
-    working_dir: /go/app/2021
+      - ./2021:/go/2021
+    working_dir: /go/2021
