@@ -113,7 +113,37 @@ func main() {
 			}
 		}
 
-		// Now I can decode the pattern
+		// Explanation
+		//		  __B__
+		//		 |     |
+		//		 C     A
+		//		 |     |
+		//		  __C__
+		//		 |     |
+		//		 D     A
+		//		 |     |
+		//		  __D__
+		// A = letters of digit 1 (the signal pattern with only two letters)
+		// B = letters of digit 7 (the one with three letters) minus the letters of A (or one as they are the same)
+		// C = letters of digit 4 (the one with four letters) minus the letters of A
+		// D = letters of digit 8 (the one with seven letters) minus letters of digit 4 and minus letters of digit 7
+
+		// So we have 1,4,7 and 8. All other numbers are found in the signals with a length of 5 or 6.
+		// Five will have B for sure. There is no other digit with 5 letters that has both letters of C.
+		// So a signal with a length of 5 that contains the letter B and both of C must be five.
+		//
+		// Three will have B for sure. There is no other digit with 5 letters that has both letters of A.
+		// So a signal with a length of 5 that contains the letter B and both of A must be three.
+		//
+		// Two will have B for sure. It is the signal with the letter of B and one of A (but not both), and one of C (but not both).
+
+		// Then the six length signals. They can be either 0, 6 or 9.
+		// 0 can only be a signal that has only one of C (since the middle element would not be active)
+		// 6 can only be a signal that has only one of A (since the top right element would not be active)
+		// 9 can only be a signal that has only one of D (since the bottom left element would not be active)
+
+		// Now we can decode the output patterns
+
 		A = one
 		B = seven.minusLettersOf(one)
 		C = four.minusLettersOf(one)
