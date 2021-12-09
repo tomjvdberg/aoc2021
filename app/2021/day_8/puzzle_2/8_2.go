@@ -131,8 +131,6 @@ func main() {
 					three = spColl
 					continue
 				}
-				// TODO this one
-				//two := lettersOf(B) && XOR(lettersOf(A)) & XOR(lettersOf(C))
 				if spColl.containsLettersOf(B) && (spColl.hasExactlyOneOf(A) && spColl.hasExactlyOneOf(C)) {
 					two = spColl
 					continue
