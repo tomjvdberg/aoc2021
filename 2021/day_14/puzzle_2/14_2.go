@@ -16,77 +16,6 @@ type rule struct {
 
 type pair string
 type pairCounter map[pair]int
-type pairGraph struct {
-	pair        pair
-	pairCounter pairCounter
-	bottomPairs pairCounter
-}
-type pairCache map[pair][]pairGraph
-
-func createPairCache(cacheSize int, rules map[pair]rule) pairCache {
-	pairCache_ := map[pair][]pairGraph{}
-	// init the cache
-	for p := range rules {
-		pairCache_[p] = []pairGraph{}
-		for i := 0; i < cacheSize; i++ {
-			pairCache_[p] = append(pairCache_[p], pairGraph{
-				pair:        p,
-				pairCounter: pairCounter{},
-				bottomPairs: pairCounter{},
-			})
-		}
-	}
-
-	for p, r := range rules {
-		recursivePairCounter(
-			p,
-			r,
-			rules,
-			pairCache_,
-			0,
-			cacheSize+1,
-		)
-	}
-
-	for p, cache := range pairCache_ {
-		pairCountSum := pairCounter{}
-		for i, pairGraph_ := range cache {
-			// add bottomPairs to pairCountSum
-			for bottomPair, cnt := range pairGraph_.bottomPairs {
-				pairCountSum[bottomPair] += cnt
-			}
-			// copy pairCountSum to this afterStep and move on
-			pairCache_[p][i].pairCounter = *copyPairCounter(pairCountSum)
-		}
-	}
-	return pairCache_
-}
-
-func recursivePairCounter(
-	pair_ pair,
-	rule rule,
-	rules map[pair]rule,
-	pairCache pairCache,
-	currentStep int,
-	maxSteps int,
-) {
-	if currentStep == maxSteps-1 {
-		return
-	}
-
-	for _, p := range rule.nextPairs {
-		pairCache[pair_][currentStep].bottomPairs[pair(p)]++
-		applicableRule := rules[pair(p)]
-		recursivePairCounter(
-			pair_,
-			applicableRule,
-			rules,
-			pairCache,
-			currentStep+1,
-			maxSteps,
-		)
-	}
-}
 
 func copyPairCounter(pairCountSum pairCounter) *pairCounter {
 	pc := pairCounter{}
@@ -96,8 +25,6 @@ func copyPairCounter(pairCountSum pairCounter) *pairCounter {
 
 	return &pc
 }
-
-const cacheSize = 20
 
 func main() {
 	start := time.Now()
@@ -120,49 +47,21 @@ func main() {
 		pairId, insertionEl := lineToPairInsertionRule(scanner.Text())
 		rules[pair(pairId)] = insertionEl
 	}
-	cache := createPairCache(cacheSize, rules)
-	fmt.Println("cache ready", time.Since(start))
 
-	// now create the initial pairs from template
-	startPairs := templateToPairCount(template)
-	var totalPairsCounter []pairCounter
-	totalPairsCounter = append(totalPairsCounter, startPairs)
-	desiredAfterStepNr := 39
-	countPairsFromCache(startPairs, &totalPairsCounter, cache, desiredAfterStepNr, 1)
-
-	ttCounter := mergePairCounters(totalPairsCounter...)
-	printLetterCountFromPairCounter(ttCounter, rules, startLetterCounter)
-	fmt.Println("End", time.Since(start))
-}
-
-func countPairsFromCache(
-	pairs map[pair]int,
-	totalPairsCounter *[]pairCounter,
-	cache pairCache,
-	stepsToGo int,
-	mul int,
-) {
-	if stepsToGo == 0 {
-		return
-	}
-	curStep := cacheSize
-	remainingStepsToGo := 0
-
-	if stepsToGo < cacheSize {
-		curStep = stepsToGo
-	}
-
-	remainingStepsToGo = stepsToGo - curStep
-
-	for pair_, cnt := range pairs {
-		// first add this to the total
-		pc := copyPairCounter(cache[pair_][curStep-1].pairCounter)
-		for p, pcnt := range *pc {
-			(*pc)[p] = pcnt * cnt * mul
+	totalPairCounter := pairCounter{}
+	bottomPairsCounter := templateToPairCount(template)
+	for i := 0; i < 40; i++ {
+		nextBottomPairs := pairCounter{}
+		for p, cnt := range bottomPairsCounter {
+			totalPairCounter[p] += cnt
+			for _, stringP := range rules[p].nextPairs {
+				nextBottomPairs[pair(stringP)] += cnt
+			}
 		}
-		*totalPairsCounter = append(*totalPairsCounter, *pc)
-		countPairsFromCache(cache[pair_][curStep-1].bottomPairs, totalPairsCounter, cache, remainingStepsToGo, cnt)
+		bottomPairsCounter = *copyPairCounter(nextBottomPairs)
 	}
+	printLetterCountFromPairCounter(totalPairCounter, rules, startLetterCounter)
+	fmt.Println("End", time.Since(start))
 }
 
 func printLetterCountFromPairCounter(totalPairCntr pairCounter, rules map[pair]rule, startLetterCounter map[string]int) {
@@ -180,17 +79,6 @@ func printLetterCountFromPairCounter(totalPairCntr pairCounter, rules map[pair]r
 	}
 	sort.Ints(letterCounts)
 	fmt.Println("Answer", letterCounts[len(letterCounts)-1]-letterCounts[0])
-}
-
-func mergePairCounters(counters ...pairCounter) pairCounter {
-	res := pairCounter{}
-	for _, counter := range counters {
-		for p, cnt := range counter {
-			res[p] += cnt
-		}
-	}
-
-	return res
 }
 
 func lineToPairInsertionRule(lineAsText string) (string, rule) {
